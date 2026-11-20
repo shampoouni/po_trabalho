@@ -41,8 +41,12 @@ public class Reserva implements Comparable<Reserva> {
     }
 
     @Override
-    public int compareTo(Reserva outra) {
-        // Ordena pela string código (ex: R000001, R000002...)
-        return this.codigo.compareTo(outra.codigo);
+    public int compareTo(Reserva outre) {
+        // Ordena primeiro pelo nome; em caso de nomes iguais, desempata pelo código da reserva
+        int nome = this.nome.compareTo(outre.nome);
+        if (nome != 0) {
+            return nome;
+        }
+        return this.codigo.compareTo(outre.codigo);
     }
 }
