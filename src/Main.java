@@ -243,7 +243,7 @@ public class Main {
             }
             sb.append('\n');
         }
-
+        System.out.println("\n" + sb);
         gravarTexto(SAIDA + "tempos.txt", sb.toString());
         System.out.println("\nTabela de tempos gravada em " + SAIDA + "tempos.txt");
     }
