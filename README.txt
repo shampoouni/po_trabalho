@@ -1,6 +1,10 @@
-Como rodar (VS Code): abra a pasta TrabalhoPO e execute a configuração "Launch" (.vscode/launch.json).
-Rode sempre a partir da raiz do projeto (a pasta que contém entrada/ e saida/).
+Trabalho de Pesquisa e Ordenação — empréstimos de biblioteca (enunciado: "Trabalho PO 2026-2.md").
 
-  src/       código-fonte (Main + pacotes ordenacao e reserva)
-  entrada/   12 arquivos Reserva*.txt + nome.txt (400 nomes)
-  saida/     arquivos gerados pelo programa (Heap, Quick, QuickInsercao, ABB, AVL, Hash) + tempos.txt
+Como rodar: execute a classe Main a partir da raiz do projeto (a pasta que contém data/ e saida/).
+Pelo terminal:
+  javac -encoding UTF-8 -d bin $(find src -name "*.java")
+  java -cp bin Main
+
+  src/       código-fonte (Main + pacotes emprestimo e ordenacao)
+  data/      12 arquivos emprestimo*.txt + nomes.txt (400 nomes a pesquisar)
+  saida/     72 arquivos gerados (Heap, Quick, QuickIns, ABB, AVL, Hash) + tempos.txt (tabela de tempos médios)
