@@ -1,452 +1,250 @@
-import java.io.*;
-import java.util.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
-import reserva.*;
-import ordenacao.*;
+import emprestimo.Emprestimo;
+import emprestimo.LerArquivo;
+import ordenacao.ArvoreABB;
+import ordenacao.ArvoreAVL;
+import ordenacao.Hash;
+import ordenacao.Heapsort;
+import ordenacao.Quicksort;
+import ordenacao.QuicksortInsercao;
 
+/**
+ * Executa em sequência (sem menu) os 6 processos do trabalho para os 12
+ * arquivos de empréstimos:
+ *   1) Heapsort  2) Quicksort  3) Quicksort + Inserção Direta
+ *   4) ABB       5) AVL        6) Hashing Encadeado
+ *
+ * Para cada método e cada arquivo: começa a contar o tempo, repete 5 vezes
+ * (carregar o arquivo, ordenar/pesquisar, gravar o resultado), termina de
+ * contar e divide por 5. O arquivo de saída é sobrescrito a cada repetição.
+ */
 public class Main {
 
-    // Pastas do projeto: entrada com os arquivos dados, saida com tudo que o programa gera
-    private static final String ENTRADA = "entrada/";
+    private static final String ENTRADA = "data/";
     private static final String SAIDA = "saida/";
+    private static final String ARQUIVO_NOMES = "nomes.txt";
+    private static final int REPETICOES = 5;
 
-    // Método principal que inicia o processo de ordenação e medição do tempo de execução
-    public static void main(String[] args) {  
-        // Lista dos arquivos para serem processados
-        // Arquivos de entrada (nomes exatamente como no diretório)
-        String[] arquivos = {
-            "Reserva1000alea.txt", "Reserva1000inv.txt", "Reserva1000ord.txt",
-            "Reserva5000alea.txt", "Reserva5000inv.txt", "Reserva5000ord.txt",
-            "Reserva10000alea.txt", "Reserva10000inv.txt", "Reserva10000ord.txt",
-            "Reserva50000alea.txt", "Reserva50000inv.txt", "Reserva50000ord.txt"
-        };
+    // Sufixos dos 12 arquivos: emprestimo<sufixo>.txt
+    private static final String[] SUFIXOS = {
+        "1000alea", "1000inv", "1000ord",
+        "5000alea", "5000inv", "5000ord",
+        "10000alea", "10000inv", "10000ord",
+        "50000alea", "50000inv", "50000ord"
+    };
 
-        // Criar os diretórios para salvar os resultados
-        criarDiretorio(SAIDA + "Heap");
-        criarDiretorio(SAIDA + "Quick");
-        criarDiretorio(SAIDA + "QuickInsercao");
-        criarDiretorio(SAIDA + "ABB");
-        criarDiretorio(SAIDA + "AVL");
-        criarDiretorio(SAIDA + "Hash");
+    // Métodos, na ordem do enunciado, com a pasta e o prefixo do arquivo de saída
+    private static final String[] METODOS = {
+        "Heapsort", "Quicksort", "Quicksort + Inserção", "ABB", "AVL", "Hashing"
+    };
+    private static final String[] PASTAS = { "Heap", "Quick", "QuickIns", "ABB", "AVL", "Hash" };
+    private static final String[] PREFIXOS = { "heap", "quick", "QuickIns", "ABB", "AVL", "Hash" };
 
-        // Processamento e ordenação com Heapsort — retorna média por arquivo (ms)
-        Map<String, Double> temposHeap = processarHeap(arquivos);
-
-        // Processamento e ordenação com Quicksort
-        Map<String, Double> temposQuick = processarQuick(arquivos);
-
-        // Processamento e ordenação com Quicksort + Inserção Direta
-        Map<String, Double> temposQuickInsercao = processarQuickInsercao(arquivos);
-
-        // Processamento com ABB (pesquisa por nome)
-        Map<String, Double> temposABB = processarABB(arquivos);
-
-        // Processamento com AVL (pesquisa por nome)
-        Map<String, Double> temposAVL = processarAVL(arquivos);
-
-        // Processamento com Hash
-        Map<String, Double> temposHash = processarHash(arquivos);
-
-        // Imprimir resumo dos tempos médios por arquivo para cada algoritmo
-        System.out.println("Resumo de tempos médios (ms) por arquivo e algoritmo:");
-        System.out.println("Veja saida/tempos.txt para tabela detalhada.");
-
-        // Mostrar resumo no console e gravar arquivo de resumo com os tempos por arquivo
-        imprimirResumoConsole("Heapsort", temposHeap);
-        imprimirResumoConsole("Quicksort", temposQuick);
-        imprimirResumoConsole("Quicksort + Inserção Direta", temposQuickInsercao);
-        imprimirResumoConsole("ABB", temposABB);
-        imprimirResumoConsole("AVL", temposAVL);
-        imprimirResumoConsole("Hash", temposHash);
-
-        gravarResumoTempos(temposHeap, temposQuick, temposQuickInsercao, temposABB, temposAVL, temposHash);
+    public static void main(String[] args) {
+        // Mostra as pastas que o programa está acessando
+        mostrarCaminhos();
+        // Encerra o programa se a pasta de entrada não existir
+        verificarPastaEntrada();
+        // Cria as pastas de saída de cada método
+        criarPastasSaida();
+        // Lê os nomes que serão pesquisados na ABB, AVL e Hash
+        ArrayList<String> nomes = carregarNomes();
+        // Roda os 6 métodos nos 12 arquivos e guarda o tempo médio de cada um
+        double[][] tempos = executarTodos(nomes);
+        // Grava a tabela de tempos em saida/tempos.txt
+        gravarTempos(tempos);
     }
 
-    private static void imprimirResumoConsole(String nome, Map<String, Double> mapa) {
-        System.out.println("--- " + nome + " ---");
-        for (var e : mapa.entrySet()) {
-            System.out.println(String.format("%s -> %.3f ms", e.getKey(), e.getValue()));
+    /** Cria a pasta de saída de cada método (Heap, Quick, QuickIns, ABB, AVL, Hash). */
+    private static void criarPastasSaida() {
+        for (String pasta : PASTAS) {
+            new File(SAIDA + pasta).mkdirs();
         }
     }
 
-    // Processa os arquivos usando o algoritmo Heapsort e grava os resultados
-    private static Map<String, Double> processarHeap(String[] arquivos) {
-        Map<String, Double> medias = new LinkedHashMap<>();
-
-        for (String arquivo : arquivos) {
-            // Carregar o arquivo UMA vez, fora das repetições (evita I/O ser contabilizado)
-            ArrayList<Reserva> original = LerArquivo.lerArquivo(resolvePath(arquivo));
-            if (original == null || original.isEmpty()) {
-                System.err.println("AVISO: arquivo '" + arquivo + "' está vazio ou não foi encontrado — saltando medição (HeapSort)");
-                medias.put(arquivo, 0.0);
-                continue;
-            }
-
-            System.out.println("Heapsort — arquivo '" + arquivo + "' carregado com " + original.size() + " registros");
-
-            long soma = 0;
-            for (int i = 0; i < 5; i++) { // Repetir o processo 5 vezes por arquivo
-                ArrayList<Reserva> reservas = new ArrayList<>(original); // copia para garantir estado limpo
-                long inicio = System.nanoTime();
-
-                // Ordenar as reservas com Heapsort (medimos apenas o algoritmo)
-                Heapsort.sort(reservas);
-
-                long fim = System.nanoTime();
-                long iterNanos = fim - inicio;
-                soma += iterNanos;
-
-                String arquivoResultadoHeap = SAIDA + "Heap/Heap" + arquivo;
-                // gravar resultado final (sobrepõe nas repetições)
-                if (i == 0) gravarResultado(arquivoResultadoHeap, reservas);
-                System.out.println(String.format("  run %d: %.3f ms", i+1, iterNanos/1_000_000.0));
-            }
-            double mediaMs = (soma / 5) / 1_000_000.0; // converte para ms (double)
-            medias.put(arquivo, mediaMs);
-            System.out.println(String.format("Heapsort — média %s: %.3f ms", arquivo, mediaMs));
-        }
-
-        return medias;
-    }
-
-    // Processa os arquivos usando o algoritmo Quicksort e grava os resultados
-    private static Map<String, Double> processarQuick(String[] arquivos) {
-        Map<String, Double> medias = new LinkedHashMap<>();
-
-        for (String arquivo : arquivos) {
-            ArrayList<Reserva> original = LerArquivo.lerArquivo(resolvePath(arquivo));
-            if (original == null || original.isEmpty()) {
-                System.err.println("AVISO: arquivo '" + arquivo + "' está vazio ou não foi encontrado — saltando medição (QuickSort)");
-                medias.put(arquivo, 0.0);
-                continue;
-            }
-
-            System.out.println("Quicksort — arquivo '" + arquivo + "' carregado com " + original.size() + " registros");
-
-            long soma = 0;
-            for (int i = 0; i < 5; i++) {
-                ArrayList<Reserva> reservas = new ArrayList<>(original);
-                long inicio = System.nanoTime();
-
-                // Ordenar as reservas com Quicksort
-                Quicksort.sort(reservas);
-
-                long fim = System.nanoTime();
-                long iterNanos = fim - inicio;
-                soma += iterNanos;
-
-                String arquivoResultadoQuick = SAIDA + "Quick/Quick" + arquivo;
-                if (i == 0) gravarResultado(arquivoResultadoQuick, reservas);
-                System.out.println(String.format("  run %d: %.3f ms", i+1, iterNanos/1_000_000.0));
-            }
-            double mediaMs = (soma / 5) / 1_000_000.0;
-            medias.put(arquivo, mediaMs);
-            System.out.println(String.format("Quicksort — média %s: %.3f ms", arquivo, mediaMs));
-        }
-
-        return medias;
-    }
-
-    // Processa os arquivos usando o algoritmo Quicksort com Inserção Direta e grava
-    // os resultados
-    private static Map<String, Double> processarQuickInsercao(String[] arquivos) {
-        Map<String, Double> medias = new LinkedHashMap<>();
-
-        for (String arquivo : arquivos) {
-            ArrayList<Reserva> original = LerArquivo.lerArquivo(resolvePath(arquivo));
-            if (original == null || original.isEmpty()) {
-                System.err.println("AVISO: arquivo '" + arquivo + "' está vazio ou não foi encontrado — saltando medição (Quick+Insercao)");
-                medias.put(arquivo, 0.0);
-                continue;
-            }
-
-            System.out.println("Quicksort+Insercao — arquivo '" + arquivo + "' carregado com " + original.size() + " registros");
-
-            long soma = 0;
-            for (int i = 0; i < 5; i++) {
-                ArrayList<Reserva> reservas = new ArrayList<>(original);
-                long inicio = System.nanoTime();
-
-                // Ordenar as reservas com Quicksort + Inserção Direta
-                QuicksortInsercao.sort(reservas);
-
-                long fim = System.nanoTime();
-                long iterNanos = fim - inicio;
-                soma += iterNanos;
-
-                String arquivoResultadoQuickInsercao = SAIDA + "QuickInsercao/QuickInsercao" + arquivo;
-                if (i == 0) gravarResultado(arquivoResultadoQuickInsercao, reservas);
-                System.out.println(String.format("  run %d: %.3f ms", i+1, iterNanos/1_000_000.0));
-            }
-            double mediaMs = (soma / 5) / 1_000_000.0;
-            medias.put(arquivo, mediaMs);
-            System.out.println(String.format("Quicksort+Insercao — média %s: %.3f ms", arquivo, mediaMs));
-        }
-
-        return medias;
-    }
-
-    // Processa os arquivos usando ABB (Árvore Binária de Busca) e grava os
-    // resultados
-    private static Map<String, Double> processarABB(String[] arquivos) {
-        List<String> nomes = lerNomes("nome.txt");
-        Map<String, Double> medias = new LinkedHashMap<>();
-
-        if (nomes == null || nomes.isEmpty()) {
-            System.err.println("AVISO: lista de nomes vazia — verificando se 'nome.txt' foi localizado corretamente.");
-        }
-
-        for (String arquivo : arquivos) {
-            ArrayList<Reserva> original = LerArquivo.lerArquivo(resolvePath(arquivo));
-            if (original == null || original.isEmpty()) {
-                System.err.println("AVISO: arquivo '" + arquivo + "' vazio/nao encontrado — saltando ABB.");
-                medias.put(arquivo, 0.0);
-                continue;
-            }
-
-            System.out.println("ABB — arquivo '" + arquivo + "' carregado com " + original.size() + " registros; nomes: " + nomes.size());
-
-            long soma = 0;
-            for (int i = 0; i < 5; i++) { // Repetir o processo 5 vezes
-                long inicio = System.nanoTime();
-
-                // cria a ABB e insere
-                ArvoreABB abb = new ArvoreABB();
-                for (Reserva reserva : original) abb.inserir(reserva);
-
-                // Pesquisa e grava
-                String arquivoResultadoABB = SAIDA + "ABB/ABB" + arquivo;
-                if (i == 0) {
-                    File f = new File(arquivoResultadoABB);
-                    if (f.exists()) f.delete();
-                }
-                for (String nome : nomes) {
-                    List<Reserva> resultadoPesquisa = abb.pesquisar(nome);
-                    gravarResultadoPesquisa(arquivoResultadoABB, nome, resultadoPesquisa);
-                }
-
-                long fim = System.nanoTime();
-                long iterNanos = fim - inicio;
-                soma += iterNanos;
-                System.out.println(String.format("  run %d: %.3f ms", i+1, iterNanos/1_000_000.0));
-            }
-
-            double mediaMs = (soma / 5) / 1_000_000.0;
-            medias.put(arquivo, mediaMs);
-            System.out.println(String.format("ABB — média %s: %.3f ms", arquivo, mediaMs));
-        }
-
-        return medias;
-    }
-
-    // Processa os arquivos usando AVL (Árvore Balanceada) e grava os resultados
-    private static Map<String, Double> processarAVL(String[] arquivos) {
-        List<String> nomes = lerNomes("nome.txt");
-        Map<String, Double> medias = new LinkedHashMap<>();
-
-        if (nomes == null || nomes.isEmpty()) {
-            System.err.println("AVISO: lista de nomes vazia — verificando se 'nome.txt' foi localizado corretamente.");
-        }
-
-        for (String arquivo : arquivos) {
-            ArrayList<Reserva> original = LerArquivo.lerArquivo(resolvePath(arquivo));
-            if (original == null || original.isEmpty()) {
-                System.err.println("AVISO: arquivo '" + arquivo + "' vazio/nao encontrado — saltando AVL.");
-                medias.put(arquivo, 0.0);
-                continue;
-            }
-
-            System.out.println("AVL — arquivo '" + arquivo + "' carregado com " + original.size() + " registros; nomes: " + nomes.size());
-
-            long soma = 0;
-            for (int i = 0; i < 5; i++) { // Repetir o processo 5 vezes
-                long inicio = System.nanoTime(); // Começa a contagem do tempo
-
-                // criar e preencher a Árvore AVL
-                ArvoreAVL arvoreAVL = new ArvoreAVL();
-                for (Reserva reserva : original) arvoreAVL.inserir(reserva);
-
-                // Pesquisa e grava
-                String arquivoResultadoAVL = SAIDA + "AVL/AVL" + arquivo;
-                if (i == 0) {
-                    File f = new File(arquivoResultadoAVL);
-                    if (f.exists()) f.delete();
-                }
-                for (String nome : nomes) {
-                    List<Reserva> resultadoPesquisa = arvoreAVL.pesquisar(nome);
-                    gravarResultadoPesquisa(arquivoResultadoAVL, nome, resultadoPesquisa);
-                }
-
-                long fim = System.nanoTime(); // Termina a contagem do tempo
-                long iterNanos = fim - inicio;
-                soma += iterNanos;
-                System.out.println(String.format("  run %d: %.3f ms", i+1, iterNanos/1_000_000.0));
-            }
-            double mediaMs = (soma / 5) / 1_000_000.0;
-            medias.put(arquivo, mediaMs);
-            System.out.println(String.format("AVL — média %s: %.3f ms", arquivo, mediaMs));
-        }
-
-        return medias;
-    }
-
-    // Processa os arquivos usando Hash e grava os resultados
-    private static Map<String, Double> processarHash(String[] arquivos) {
-        List<String> nomes = lerNomes("nome.txt");
-        Map<String, Double> medias = new LinkedHashMap<>();
-
-        if (nomes == null || nomes.isEmpty()) {
-            System.err.println("AVISO: lista de nomes vazia — verificando se 'nome.txt' foi localizado corretamente.");
-        }
-
-        for (String arquivo : arquivos) {
-            ArrayList<Reserva> original = LerArquivo.lerArquivo(resolvePath(arquivo));
-            if (original == null || original.isEmpty()) {
-                System.err.println("AVISO: arquivo '" + arquivo + "' vazio/nao encontrado — saltando Hash.");
-                medias.put(arquivo, 0.0);
-                continue;
-            }
-
-            System.out.println("Hash — arquivo '" + arquivo + "' carregado com " + original.size() + " registros; nomes: " + nomes.size());
-
-            long soma = 0;
-            for (int i = 0; i < 5; i++) { // Repetir o processo 5 vezes
-                long inicio = System.nanoTime(); // Começa a contagem do tempo
-
-                // construir hash e inserir reservas
-                Hash tabelaHash = new Hash(Math.max(original.size(), 100));
-                for (Reserva reserva : original) tabelaHash.inserir(reserva);
-
-                // Realizar a pesquisa de nomes na tabela Hash e gravar os resultados
-                String arquivoResultadoHash = SAIDA + "Hash/Hash" + arquivo;
-                if (i == 0) {
-                    File f = new File(arquivoResultadoHash);
-                    if (f.exists()) f.delete();
-                }
-                for (String nome : nomes) {
-                    List<Reserva> resultadoPesquisa = tabelaHash.get(nome);
-                    gravarResultadoPesquisa(arquivoResultadoHash, nome, resultadoPesquisa);
-                }
-
-                long fim = System.nanoTime(); // Termina a contagem do tempo
-                long iterNanos = fim - inicio;
-                soma += iterNanos;
-                System.out.println(String.format("  run %d: %.3f ms", i+1, iterNanos/1_000_000.0));
-            }
-            double mediaMs = (soma / 5) / 1_000_000.0;
-            medias.put(arquivo, mediaMs);
-            System.out.println(String.format("Hash — média %s: %.3f ms", arquivo, mediaMs));
-        }
-
-        return medias;
-    }
-
-    // Método para criar diretórios onde os arquivos de resultados serão salvos
-    private static void criarDiretorio(String nomeDiretorio) {
-        File pasta = new File(nomeDiretorio);
-        if (!pasta.exists()) {
-            boolean success = pasta.mkdirs();
-            if (success) {
-                System.out.println("Pasta '" + nomeDiretorio + "' criada com sucesso.");
-            } else {
-                System.out.println("Erro ao criar a pasta '" + nomeDiretorio + "'.");
-            }
-        } else {
-            System.out.println("Pasta '" + nomeDiretorio + "' já existe.");
-        }
-    }
-
-    // Os arquivos de entrada ficam sempre na pasta entrada/
-    private static String resolvePath(String nomeArquivo) {
-        return ENTRADA + nomeArquivo;
-    }
-
-    // Método para gravar o resultado da ordenação em um arquivo
-    private static void gravarResultado(String nomeArquivo, ArrayList<Reserva> reservas) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(nomeArquivo))) {
-            for (Reserva reserva : reservas) {
-                // escreve a reserva completa no formato padrão (codigo;nome;voo;data;assento)
-                writer.write(reserva.toString() + "\n");
-            }
-            System.out.println("Resultado gravado em: " + nomeArquivo);
-        } catch (IOException e) {
-            System.err.println("Erro ao gravar o arquivo: " + nomeArquivo);
-        }
-    }
-
-    // Método para gravar o resultado da pesquisa no arquivo
-    private static void gravarResultadoPesquisa(String nomeArquivo, String nome, List<Reserva> resultadoPesquisa) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(nomeArquivo, true))) {
-            writer.write("NOME " + nome + ":\n");
-
-            if (resultadoPesquisa.isEmpty()) {
-                writer.write("NÃO TEM RESERVA\n");
-            } else {
-                for (Reserva reserva : resultadoPesquisa) {
-                    // detalha codigo e nome para que a reserva possa ser identificada
-                    writer.write("Reserva: " + reserva.getCodigo() + " | Nome: " + reserva.getNome()
-                            + " | voo: " + reserva.getVoo() + " | Data: " + reserva.getData()
-                            + " | assento: " + reserva.getInfo() + "\n");
-                }
-                writer.write("TOTAL: " + resultadoPesquisa.size() + " reservas\n");
-            }
-
-            System.out.println("Resultado da pesquisa para o NOME '" + nome + "' gravado no arquivo " + nomeArquivo);
-        } catch (IOException e) {
-            System.err.println("Erro ao gravar o arquivo " + nomeArquivo + ": " + e.getMessage());
-        }
-    }
-
-    // Lê os nomes a serem pesquisados (um por linha) da pasta entrada/
-    private static List<String> lerNomes(String nomeArquivo) {
-        List<String> nomes = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(ENTRADA + nomeArquivo))) {
-            String linha;
-            while ((linha = reader.readLine()) != null) {
-                if (!linha.trim().isEmpty()) nomes.add(linha.trim());
-            }
-        } catch (IOException e) {
-            System.err.println("Erro ao ler " + ENTRADA + nomeArquivo + ": " + e.getMessage());
-        }
+    /** Lê o arquivo com os nomes a pesquisar. */
+    private static ArrayList<String> carregarNomes() {
+        ArrayList<String> nomes = LerArquivo.lerNomes(ENTRADA + ARQUIVO_NOMES);
+        System.out.println("Nomes a pesquisar: " + nomes.size());
         return nomes;
     }
 
-    // Grava um resumo tabulado com os tempos médios por arquivo para cada algoritmo
-    private static void gravarResumoTempos(Map<String, Double> heap,
-                                          Map<String, Double> quick,
-                                          Map<String, Double> quickInsercao,
-                                          Map<String, Double> abb,
-                                          Map<String, Double> avl,
-                                          Map<String, Double> hash) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(SAIDA + "tempos.txt"))) {
-            writer.write("Heapsort:\n");
-            for (var e : heap.entrySet()) {
-                writer.write(e.getKey() + " -> " + String.format("%.3f", e.getValue()) + " ms\n");
-            }
-            writer.write("\nQuicksort:\n");
-            for (var e : quick.entrySet()) {
-                writer.write(e.getKey() + " -> " + String.format("%.3f", e.getValue()) + " ms\n");
-            }
-            writer.write("\nQuicksort + Inserção Direta:\n");
-            for (var e : quickInsercao.entrySet()) {
-                writer.write(e.getKey() + " -> " + String.format("%.3f", e.getValue()) + " ms\n");
-            }
-            writer.write("\nABB:\n");
-            for (var e : abb.entrySet()) {
-                writer.write(e.getKey() + " -> " + String.format("%.3f", e.getValue()) + " ms\n");
-            }
-            writer.write("\nAVL:\n");
-            for (var e : avl.entrySet()) {
-                writer.write(e.getKey() + " -> " + String.format("%.3f", e.getValue()) + " ms\n");
-            }
-            writer.write("\nHash:\n");
-            for (var e : hash.entrySet()) {
-                writer.write(e.getKey() + " -> " + String.format("%.3f", e.getValue()) + " ms\n");
-            }
+    /**
+     * Roda cada um dos 6 métodos em cada um dos 12 arquivos.
+     *
+     * @return tempos[metodo][arquivo] = tempo médio em ms
+     */
+    private static double[][] executarTodos(ArrayList<String> nomes) {
+        double[][] tempos = new double[METODOS.length][SUFIXOS.length];
 
-            System.out.println("Arquivo de resumo 'saida/tempos.txt' gravado com sucesso.");
-        } catch (IOException e) {
-            System.err.println("Erro ao gravar tempos.txt: " + e.getMessage());
+        for (int m = 0; m < METODOS.length; m++) {
+            System.out.println("\n=== " + METODOS[m] + " ===");
+            for (int a = 0; a < SUFIXOS.length; a++) {
+                tempos[m][a] = medirTempoMedio(m, a, nomes);
+            }
         }
+
+        return tempos;
+    }
+
+    /**
+     * Procedimento do enunciado para um método e um arquivo: começa a contar o
+     * tempo, executa 5 vezes (carregar, processar, gravar), termina de contar e
+     * divide por 5.
+     *
+     * @return tempo médio de uma execução, em ms
+     */
+    private static double medirTempoMedio(int metodo, int arquivo, ArrayList<String> nomes) {
+        String entrada = ENTRADA + "emprestimo" + SUFIXOS[arquivo] + ".txt";
+        String saida = SAIDA + PASTAS[metodo] + "/" + PREFIXOS[metodo] + SUFIXOS[arquivo] + ".txt";
+
+        long inicio = System.nanoTime();
+        for (int r = 0; r < REPETICOES; r++) {
+            executar(metodo, entrada, saida, nomes);
+        }
+        long fim = System.nanoTime();
+
+        double mediaMs = (fim - inicio) / (double) REPETICOES / 1_000_000.0;
+        System.out.printf("%-12s %10.3f ms  -> %s%n", SUFIXOS[arquivo], mediaMs, saida);
+        return mediaMs;
+    }
+
+    /**
+     * Mostra as pastas que o programa está acessando
+     */
+    private static void mostrarCaminhos() {
+        File pastaEntrada = new File(ENTRADA);
+        System.out.println("Diretório de trabalho: " + new File("").getAbsolutePath());
+        System.out.println("Pasta de entrada:      " + pastaEntrada.getAbsolutePath()
+                + (pastaEntrada.isDirectory() ? "  (encontrada)" : "  (NÃO ENCONTRADA)"));
+        System.out.println("Pasta de saída:        " + new File(SAIDA).getAbsolutePath());
+    }
+
+    /**
+     * Encerra o programa se a pasta de entrada não existir: sem ela não há o que
+     * processar
+     */
+    private static void verificarPastaEntrada() {
+        File pastaEntrada = new File(ENTRADA);
+        if (!pastaEntrada.isDirectory()) {
+            System.err.println("ERRO: pasta de entrada não encontrada em " + pastaEntrada.getAbsolutePath());
+            System.err.println("Confira se a pasta '" + ENTRADA + "' existe no projeto.");
+            System.exit(1);
+        }
+    }
+
+    /** Uma repetição do procedimento: carrega o arquivo, processa e grava a saída. */
+    private static void executar(int metodo, String entrada, String saida, ArrayList<String> nomes) {
+        ArrayList<Emprestimo> lista = LerArquivo.lerArquivo(entrada);
+
+        switch (metodo) {
+            case 0:
+                Heapsort.sort(lista);
+                gravarOrdenacao(saida, lista);
+                break;
+            case 1:
+                Quicksort.sort(lista);
+                gravarOrdenacao(saida, lista);
+                break;
+            case 2:
+                QuicksortInsercao.sort(lista);
+                gravarOrdenacao(saida, lista);
+                break;
+            case 3: {
+                ArvoreABB abb = new ArvoreABB();
+                for (Emprestimo e : lista) abb.inserir(e);
+                abb.balancear();
+                StringBuilder sb = new StringBuilder();
+                for (String nome : nomes) formatarPesquisa(sb, nome, abb.pesquisar(nome));
+                gravarTexto(saida, sb.toString());
+                break;
+            }
+            case 4: {
+                ArvoreAVL avl = new ArvoreAVL();
+                for (Emprestimo e : lista) avl.inserir(e);
+                StringBuilder sb = new StringBuilder();
+                for (String nome : nomes) formatarPesquisa(sb, nome, avl.pesquisar(nome));
+                gravarTexto(saida, sb.toString());
+                break;
+            }
+            case 5: {
+                Hash hash = new Hash(lista.size());
+                for (Emprestimo e : lista) hash.inserir(e);
+                StringBuilder sb = new StringBuilder();
+                for (String nome : nomes) formatarPesquisa(sb, nome, hash.pesquisar(nome));
+                gravarTexto(saida, sb.toString());
+                break;
+            }
+            default:
+                throw new IllegalArgumentException("Método inválido: " + metodo);
+        }
+    }
+
+    /** Grava a lista ordenada no mesmo formato do arquivo de entrada. */
+    private static void gravarOrdenacao(String arquivo, ArrayList<Emprestimo> lista) {
+        StringBuilder sb = new StringBuilder();
+        for (Emprestimo e : lista) {
+            sb.append(e.toString()).append('\n');
+        }
+        gravarTexto(arquivo, sb.toString());
+    }
+
+    /** Formata o resultado da pesquisa de um nome conforme o modelo do enunciado. */
+    private static void formatarPesquisa(StringBuilder sb, String nome, List<Emprestimo> encontrados) {
+        sb.append("NOME: ").append(nome).append('\n');
+
+        if (encontrados.isEmpty()) {
+            sb.append("NÃO POSSUI EMPRÉSTIMOS\n\n");
+            return;
+        }
+
+        for (Emprestimo e : encontrados) {
+            sb.append("Empréstimo: ").append(e.getCodigo())
+              .append(" - Livro: ").append(e.getTitulo())
+              .append(" - Autor: ").append(e.getAutor()).append('\n');
+            sb.append("Data do empréstimo: ").append(e.getDataEmprestimo())
+              .append(" - Data de devolução: ").append(e.getDataDevolucao()).append("\n\n");
+        }
+        int total = encontrados.size();
+        sb.append("TOTAL: ").append(total).append(total == 1 ? " empréstimo" : " empréstimos").append("\n\n");
+    }
+
+    /** Grava o texto no arquivo, sobrescrevendo o conteúdo anterior. */
+    private static void gravarTexto(String arquivo, String texto) {
+        try (BufferedWriter w = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(arquivo, false), StandardCharsets.UTF_8))) {
+            w.write(texto);
+        } catch (IOException e) {
+            System.err.println("Erro ao gravar " + arquivo + ": " + e.getMessage());
+        }
+    }
+
+    /** Grava saida/tempos.txt: uma tabela com o tempo médio (ms) de cada método para cada arquivo. */
+    private static void gravarTempos(double[][] tempos) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Tempo médio (ms) de 5 execuções — cada execução: carregar + ordenar/pesquisar + gravar\n\n");
+
+        sb.append(String.format("%-22s", "Método"));
+        for (String s : SUFIXOS) sb.append(String.format("%12s", s));
+        sb.append('\n');
+
+        for (int m = 0; m < METODOS.length; m++) {
+            sb.append(String.format("%-22s", METODOS[m]));
+            for (int a = 0; a < SUFIXOS.length; a++) {
+                sb.append(String.format("%12.3f", tempos[m][a]));
+            }
+            sb.append('\n');
+        }
+
+        gravarTexto(SAIDA + "tempos.txt", sb.toString());
+        System.out.println("\nTabela de tempos gravada em " + SAIDA + "tempos.txt");
     }
 }
