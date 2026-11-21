@@ -3,17 +3,17 @@ package ordenacao;
 import java.util.ArrayList;
 import java.util.List;
 
-import reserva.Reserva;
+import emprestimo.Emprestimo;
 
 /**
  * Classe NoAVL
- * Representa um nó de uma Árvore AVL que armazena uma Reserva
- * e todas as reservas associadas à mesma chave (ex: mesmo CPF, nome, etc).
+ * Representa um nó de uma Árvore AVL que armazena um Emprestimo
+ * e todos os empréstimos associados à mesma chave (nome do usuário).
  */
 public class NoAVL {
 
-    private Reserva item;           // Primeiro item associado ao nó (chave principal)
-    private List<Reserva> reservas; // Lista de reservas com a mesma chave
+    private Emprestimo item;           // Primeiro item associado ao nó (chave principal)
+    private List<Emprestimo> emprestimos; // Todos os empréstimos com o mesmo nome
 
     private NoAVL esq;              // Filho esquerdo
     private NoAVL dir;              // Filho direito
@@ -21,12 +21,12 @@ public class NoAVL {
 
     /**
      * Construtor do nó AVL.
-     * @param item Reserva a ser armazenada como primeiro elemento do nó.
+     * @param item Emprestimo a ser armazenado como primeiro elemento do nó.
      */
-    public NoAVL(Reserva item) {
+    public NoAVL(Emprestimo item) {
         this.item = item;
-        this.reservas = new ArrayList<>();
-        this.reservas.add(item);   // A primeira reserva define o nó
+        this.emprestimos = new ArrayList<>();
+        this.emprestimos.add(item);   // O primeiro empréstimo define o nó
         this.altura = 0;           // Nó inicial sempre altura 0
     }
 
@@ -34,12 +34,12 @@ public class NoAVL {
     // Getters e Setters
     // ================================
 
-    public Reserva getItem() {
+    public Emprestimo getItem() {
         return item;
     }
 
-    public List<Reserva> getReservas() {
-        return reservas;
+    public List<Emprestimo> getEmprestimos() {
+        return emprestimos;
     }
 
     public NoAVL getEsq() {
@@ -67,12 +67,12 @@ public class NoAVL {
     }
 
     /**
-     * Adiciona uma nova reserva à lista de reservas associadas ao nó.
+     * Adiciona um novo empréstimo à lista de empréstimos do nó.
      * Este método é usado quando já existe um nó com a mesma chave.
      *
-     * @param reserva A nova reserva a ser adicionada.
+     * @param emprestimo O novo empréstimo a ser adicionado.
      */
-    public void adicionarReserva(Reserva reserva) {
-        this.reservas.add(reserva);
+    public void adicionar(Emprestimo emprestimo) {
+        this.emprestimos.add(emprestimo);
     }
 }

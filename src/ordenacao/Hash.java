@@ -2,71 +2,95 @@ package ordenacao;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 
-import reserva.Reserva;
+import emprestimo.Emprestimo;
 
-// Representa uma entrada na tabela hash, que armazena uma chave (nome) e a lista de reservas associadas a ela
-class HashEntry {
-    String nome; // A chave (nome) associada às reservas
-    List<Reserva> Reservas; // Lista de reservas associadas ao nome
-
-    // Construtor da entrada
-    HashEntry(String nome) {
-        this.nome = nome;
-        this.Reservas = new ArrayList<>();
-    }
-}
-
+/**
+ * Hashing Encadeado cuja chave é o nome do usuário (chave secundária).
+ *
+ * Cada posição do vetor é uma lista encadeada (LinkedList) de entradas; cada
+ * entrada guarda um nome e TODOS os empréstimos desse nome. Assim, ao pesquisar
+ * um nome, todos os registros associados a ele são encontrados.
+ */
 public class Hash {
-    private LinkedList<HashEntry>[] table; // Tabela hash, onde cada posição é uma lista ligada
-    private int size; // Tamanho da tabela hash
 
-    // Construtor da tabela hash
-    @SuppressWarnings("unchecked")
-    public Hash(int size) {
-        this.size = size;
-        table = new LinkedList[size]; // Cria a tabela com o número de posições fornecido
-        for (int i = 0; i < size; i++) {
-            table[i] = new LinkedList<>(); // Inicializa cada posição com uma lista ligada vazia
+    /** Entrada da tabela: um nome e a lista de empréstimos desse nome. */
+    private static class Entrada {
+        String nome;
+        ArrayList<Emprestimo> emprestimos = new ArrayList<>();
+
+        Entrada(String nome) {
+            this.nome = nome;
         }
     }
 
-    // Função de hash: calcula o índice da tabela baseado no código hash da chave (nome)
-    private int hash(String nome) {
-        return Math.abs(nome.hashCode()) % size; // Retorna o índice da tabela
+    private LinkedList<Entrada>[] tabela;
+    private int tamanho;
+
+    /**
+     * @param quantRegistros quantidade de registros que serão inseridos; o
+     *                       tamanho da tabela é o primeiro primo maior ou igual
+     *                       a esse valor (primo espalha melhor no resto da divisão).
+     */
+    @SuppressWarnings("unchecked")
+    public Hash(int quantRegistros) {
+        this.tamanho = proximoPrimo(Math.max(quantRegistros, 11));
+        this.tabela = new LinkedList[tamanho];
+        for (int i = 0; i < tamanho; i++) {
+            tabela[i] = new LinkedList<>();
+        }
     }
 
-    // Insere uma Reserva na tabela hash
-    public void inserir(Reserva Reserva) {
-        String nome = Reserva.getNome(); // chave (nome) da reserva
-        int index = hash(nome); // Calcula o índice na tabela usando a função hash
+    /**
+     * Função de espalhamento feita sobre o nome do usuário (método polinomial):
+     * h = (h * 31 + caractere) mod tamanho, para cada caractere do nome.
+     * Calcular o mod a cada passo mantém o valor sempre positivo e sem estouro.
+     */
+    private int hash(String nome) {
+        long h = 0;
+        for (int i = 0; i < nome.length(); i++) {
+            h = (h * 31 + nome.charAt(i)) % tamanho;
+        }
+        return (int) h;
+    }
 
-        // Procura a entrada da chave na lista ligada correspondente ao índice
-        for (HashEntry entry : table[index]) {
-            if (entry.nome.equals(nome)) {
-                entry.Reservas.add(Reserva); // Se a mesma chave já existir, adiciona a reserva à lista
+    /** Insere um empréstimo. Se o nome já existe, adiciona na lista desse nome. */
+    public void inserir(Emprestimo e) {
+        String nome = e.getNome();
+        LinkedList<Entrada> lista = tabela[hash(nome)];
+
+        for (Entrada entrada : lista) {
+            if (entrada.nome.equals(nome)) {
+                entrada.emprestimos.add(e); // nome repetido: mesmo grupo
                 return;
             }
         }
 
-        // Se a chave não existir, cria uma nova entrada e adiciona a reserva
-        HashEntry novoHash = new HashEntry(nome);
-        novoHash.Reservas.add(Reserva);
-        table[index].add(novoHash); // Adiciona a nova entrada na lista ligada
+        Entrada nova = new Entrada(nome);
+        nova.emprestimos.add(e);
+        lista.add(nova); // colisão: encadeia na mesma posição
     }
 
-    // Retorna todas as reservas associadas a uma chave
-    public List<Reserva> get(String nome) {
-        int index = hash(nome); // Calcula o índice na tabela usando a função hash
-
-        // Procura a entrada da chave na lista ligada correspondente ao índice
-        for (HashEntry entry : table[index]) {
-            if (entry.nome.equals(nome)) {
-                return entry.Reservas; // Se a chave for encontrada, retorna a lista de reservas
+    /** Devolve todos os empréstimos do nome (lista vazia se não existir). */
+    public ArrayList<Emprestimo> pesquisar(String nome) {
+        for (Entrada entrada : tabela[hash(nome)]) {
+            if (entrada.nome.equals(nome)) {
+                return entrada.emprestimos;
             }
         }
+        return new ArrayList<>();
+    }
 
-        return new ArrayList<>(); // Se a chave não for encontrada, retorna uma lista vazia
+    private static int proximoPrimo(int n) {
+        while (!ehPrimo(n)) n++;
+        return n;
+    }
+
+    private static boolean ehPrimo(int n) {
+        if (n < 2) return false;
+        for (int d = 2; (long) d * d <= n; d++) {
+            if (n % d == 0) return false;
+        }
+        return true;
     }
 }

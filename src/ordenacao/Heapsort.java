@@ -2,11 +2,11 @@ package ordenacao;
 
 import java.util.ArrayList;
 
-import reserva.Reserva;
+import emprestimo.Emprestimo;
 
 /**
  * A classe Heapsort implementa o algoritmo de ordenação HeapSort para ordenar
- * uma lista de objetos Reserva. O HeapSort é um algoritmo baseado na estrutura de
+ * uma lista de objetos Emprestimo. O HeapSort é um algoritmo baseado na estrutura de
  * dados heap.
  */
 public class Heapsort {
@@ -14,12 +14,12 @@ public class Heapsort {
     /**
      * Método principal de ordenação utilizando o algoritmo HeapSort.
      * 
-     * @param lista A lista de objetos Reserva a ser ordenada.
+     * @param lista A lista de objetos Emprestimo a ser ordenada.
      */
-    public static void sort(ArrayList<Reserva> lista) {
+    public static void sort(ArrayList<Emprestimo> lista) {
         int dir = lista.size() - 1; // Índice do último elemento
         int esq = (dir - 1) / 2; // Índice do penúltimo nível (pai do último elemento)
-        Reserva temp; // Variável temporária para troca de elementos
+        Emprestimo temp; // Variável temporária para troca de elementos
 
         // Constrói o heap (rearranja a lista para garantir a propriedade de heap)
         while (esq >= 0) {
@@ -46,14 +46,14 @@ public class Heapsort {
      * Refaz o heap a partir de uma posição específica (manipula a lista em uma
      * subárvore).
      * 
-     * @param lista A lista de objetos Reserva.
+     * @param lista A lista de objetos Emprestimo.
      * @param esq   O índice do nó que deve ser ajustado.
      * @param dir   O índice do último elemento da subárvore.
      */
-    private static void refazHeap(ArrayList<Reserva> lista, int esq, int dir) {
+    private static void refazHeap(ArrayList<Emprestimo> lista, int esq, int dir) {
         int i = esq; // Posição inicial (nó que será ajustado)
         int mF = 2 * i + 1; // Índice do filho à esquerda
-        Reserva raiz = lista.get(i); // Armazena o valor da raiz da subárvore
+        Emprestimo raiz = lista.get(i); // Armazena o valor da raiz da subárvore
         boolean heap = false; // Variável de controle para saber se o heap está correto
 
         // Enquanto o filho maior não for maior que a raiz e a subárvore não estiver bem

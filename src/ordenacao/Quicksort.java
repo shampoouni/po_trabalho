@@ -2,11 +2,11 @@ package ordenacao;
 
 import java.util.ArrayList;
 
-import reserva.Reserva;
+import emprestimo.Emprestimo;
 
 /**
  * A classe Quicksort implementa o algoritmo de ordenação QuickSort para ordenar
- * uma lista de objetos Reserva. O QuickSort é um algoritmo eficiente de ordenação
+ * uma lista de objetos Emprestimo. O QuickSort é um algoritmo eficiente de ordenação
  * baseado
  * na estratégia de dividir e conquistar.
  */
@@ -15,43 +15,43 @@ public class Quicksort {
     /**
      * Método principal que inicia o processo de ordenação QuickSort.
      * 
-     * @param Reservas A lista de objetos Reserva a ser ordenada.
+     * @param emprestimos A lista de objetos Emprestimo a ser ordenada.
      */
-    public static void sort(ArrayList<Reserva> Reservas) {
+    public static void sort(ArrayList<Emprestimo> emprestimos) {
         // Verifica se a lista não está vazia
-        if (Reservas != null && !Reservas.isEmpty()) {
+        if (emprestimos != null && !emprestimos.isEmpty()) {
             // Chama o método recursivo quicksort para ordenar a lista
-            quicksort(Reservas, 0, Reservas.size() - 1);
+            quicksort(emprestimos, 0, emprestimos.size() - 1);
         }
     }
 
     /**
-     * Método recursivo que executa o algoritmo QuickSort para a lista de Reservas.
+     * Método recursivo que executa o algoritmo QuickSort para a lista de emprestimos.
      * 
-     * @param Reservas A lista de objetos Reserva.
+     * @param emprestimos A lista de objetos Emprestimo.
      * @param esq    O índice inicial (esquerda) da parte da lista a ser ordenada.
      * @param dir    O índice final (direita) da parte da lista a ser ordenada.
      */
-    private static void quicksort(ArrayList<Reserva> Reservas, int esq, int dir) {
+    private static void quicksort(ArrayList<Emprestimo> emprestimos, int esq, int dir) {
         int i = esq, j = dir;
         // Seleciona o pivô (elemento do meio da lista)
-        Reserva pivo = Reservas.get((esq + dir) / 2);
+        Emprestimo pivo = emprestimos.get((esq + dir) / 2);
 
         // Loop para dividir a lista em duas partes (menores e maiores que o pivô)
         while (i <= j) {
             // Move o índice i até encontrar um valor maior ou igual ao pivô
-            while (Reservas.get(i).compareTo(pivo) < 0)
+            while (emprestimos.get(i).compareTo(pivo) < 0)
                 i++;
             // Move o índice j até encontrar um valor menor ou igual ao pivô
-            while (Reservas.get(j).compareTo(pivo) > 0)
+            while (emprestimos.get(j).compareTo(pivo) > 0)
                 j--;
 
             // Se os índices ainda estiverem válidos, troca os elementos
             if (i <= j) {
                 // Troca os elementos nas posições i e j
-                Reserva temp = Reservas.get(i);
-                Reservas.set(i, Reservas.get(j));
-                Reservas.set(j, temp);
+                Emprestimo temp = emprestimos.get(i);
+                emprestimos.set(i, emprestimos.get(j));
+                emprestimos.set(j, temp);
                 i++; // Move o índice i para a direita
                 j--; // Move o índice j para a esquerda
             }
@@ -59,9 +59,9 @@ public class Quicksort {
 
         // Chama recursivamente o método quicksort para a sublista à esquerda
         if (esq < j)
-            quicksort(Reservas, esq, j);
+            quicksort(emprestimos, esq, j);
         // Chama recursivamente o método quicksort para a sublista à direita
         if (i < dir)
-            quicksort(Reservas, i, dir);
+            quicksort(emprestimos, i, dir);
     }
 }

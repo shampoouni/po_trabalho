@@ -3,7 +3,7 @@ package ordenacao;
 import java.util.ArrayList;
 import java.util.List;
 
-import reserva.Reserva;
+import emprestimo.Emprestimo;
 
 public class ArvoreAVL {
 
@@ -17,36 +17,36 @@ public class ArvoreAVL {
     }
 
     /**
-     * Insere uma reserva na árvore.
-     * A árvore é ordenada pelo CÓDIGO da reserva (chave).
-     * Se o código já existir, adiciona a reserva no mesmo nó.
+     * Insere um empréstimo na árvore.
+     * A árvore é ordenada pelo NOME do usuário (chave secundária).
+     * Se o nome já existir, adiciona o empréstimo no mesmo nó (nada é descartado).
      */
-    public void inserir(Reserva reserva) {
-        this.raiz = inserir(reserva, this.raiz);
+    public void inserir(Emprestimo emprestimo) {
+        this.raiz = inserir(emprestimo, this.raiz);
     }
 
     /**
      * Inserção recursiva na árvore AVL.
      */
-    private NoAVL inserir(Reserva reserva, NoAVL no) {
+    private NoAVL inserir(Emprestimo emprestimo, NoAVL no) {
 
-        // Caso base: nó vazio → cria novo nó com a reserva
+        // Caso base: nó vazio → cria novo nó com o empréstimo
         if (no == null) {
-            return new NoAVL(reserva);
+            return new NoAVL(emprestimo);
         }
 
         // *** CHAVE DA ÁRVORE = NOME (chave secundária para pesquisa) ***
-        int comparacao = reserva.getNome().compareTo(no.getItem().getNome());
+        int comparacao = emprestimo.getNome().compareTo(no.getItem().getNome());
 
         if (comparacao < 0) { // Inserção à esquerda
-            no.setEsq(inserir(reserva, no.getEsq()));
+            no.setEsq(inserir(emprestimo, no.getEsq()));
         }
         else if (comparacao > 0) { // Inserção à direita
-            no.setDir(inserir(reserva, no.getDir()));
+            no.setDir(inserir(emprestimo, no.getDir()));
         }
         else {
-            // Código IGUAL → adiciona a reserva no mesmo nó
-            no.adicionarReserva(reserva);
+            // Nome IGUAL → adiciona o empréstimo no mesmo nó
+            no.adicionar(emprestimo);
             return no; // Não precisa balancear
         }
 
@@ -146,32 +146,32 @@ public class ArvoreAVL {
     }
 
     /**
-     * Pesquisa todas as reservas de um código.
-     * @param codigo chave buscada.
+     * Pesquisa todos os empréstimos de um nome de usuário.
+     * @param nome chave buscada (nome do usuário).
      */
-    public List<Reserva> pesquisar(String codigo) {
-        NoAVL no = pesquisarNo(codigo, this.raiz);
-        return (no != null) ? no.getReservas() : new ArrayList<>();
+    public List<Emprestimo> pesquisar(String nome) {
+        NoAVL no = pesquisarNo(nome, this.raiz);
+        return (no != null) ? no.getEmprestimos() : new ArrayList<>();
     }
 
     /**
-     * Pesquisa recursivamente um nó pelo código.
+     * Pesquisa recursivamente um nó pelo nome.
      */
-    private NoAVL pesquisarNo(String codigo, NoAVL no) {
+    private NoAVL pesquisarNo(String nome, NoAVL no) {
         if (no == null) {
             return null;
         }
 
-        int comparacao = codigo.compareTo(no.getItem().getNome());
+        int comparacao = nome.compareTo(no.getItem().getNome());
 
         if (comparacao == 0) {
             return no; // encontrado
         }
         else if (comparacao < 0) {
-            return pesquisarNo(codigo, no.getEsq());
+            return pesquisarNo(nome, no.getEsq());
         }
         else {
-            return pesquisarNo(codigo, no.getDir());
+            return pesquisarNo(nome, no.getDir());
         }
     }
 }

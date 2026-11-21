@@ -2,32 +2,34 @@ package ordenacao;
 
 import java.util.ArrayList;
 
-import reserva.Reserva;
+import emprestimo.Emprestimo;
 
 public class InsercaoDireta {
 
     /**
-     * Método de ordenação por Inserção Direta.
-     * Este método organiza a lista de Reservas em ordem crescente.
-     * 
-     * @param lista A lista de objetos Reserva a ser ordenada.
+     * Ordena a lista inteira por Inserção Direta.
      */
-    public void insercaoDireta(ArrayList<Reserva> lista) {
-        int i, j;
-        Reserva temp;
+    public static void sort(ArrayList<Emprestimo> lista) {
+        sort(lista, 0, lista.size() - 1);
+    }
 
-        // Inicia o processo de inserção a partir do segundo elemento
-        for (i = 1; i < lista.size(); i++) {
-            temp = lista.get(i); // Guarda o elemento a ser inserido
-            j = i - 1; // O índice j aponta para o elemento anterior
+    /**
+     * Ordena apenas o trecho lista[esq..dir] por Inserção Direta (usado pelo
+     * Quicksort com Inserção nas partições pequenas, sem copiar a lista).
+     * É estável: só desloca elementos estritamente maiores.
+     */
+    public static void sort(ArrayList<Emprestimo> lista, int esq, int dir) {
+        for (int i = esq + 1; i <= dir; i++) {
+            Emprestimo temp = lista.get(i); // elemento a ser inserido
+            int j = i - 1;
 
-            // Move os elementos maiores que 'temp' uma posição à direita
-            while (j >= 0 && lista.get(j).compareTo(temp) > 0) {
-                lista.set(j + 1, lista.get(j)); // Move o elemento para a direita
-                j--; // Decrementa j para continuar comparando com os elementos anteriores
+            // Desloca para a direita os elementos maiores que 'temp'
+            while (j >= esq && lista.get(j).compareTo(temp) > 0) {
+                lista.set(j + 1, lista.get(j));
+                j--;
             }
 
-            // Insere o elemento 'temp' na posição correta
+            // Insere 'temp' na posição correta
             lista.set(j + 1, temp);
         }
     }

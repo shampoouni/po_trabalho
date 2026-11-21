@@ -1,90 +1,49 @@
 package ordenacao;
 
 import java.util.ArrayList;
-import java.util.List;
 
-import reserva.Reserva;
+import emprestimo.Emprestimo;
 
+/**
+ * Nó da ABB. A chave do nó é o nome do usuário (chave secundária) e o nó guarda
+ * TODOS os empréstimos com esse nome, para não descartar nomes repetidos.
+ */
 public class NoABB {
-    private Reserva item; // Representa a primeira reserva associada à chave (nome)
-    private List<Reserva> Reservas; // Lista de reservas associadas à mesma chave
-    private NoABB esq, dir; // Ponteiros para os filhos esquerdo e direito
+    private String nome;                       // chave do nó
+    private ArrayList<Emprestimo> emprestimos; // todos os empréstimos desse nome
+    private NoABB esq, dir;
 
-    /**
-     * Construtor da classe NoABB.
-     * 
-     * @param item A primeira Reserva associada ao nó.
-     */
-    public NoABB(Reserva item) {
-        this.item = item; // A primeira reserva que pertence à chave do nó
-        this.Reservas = new ArrayList<>(); // Inicializa a lista de Reservas
-        this.Reservas.add(item); // Adiciona a primeira Reserva à lista
+    public NoABB(Emprestimo primeiro) {
+        this.nome = primeiro.getNome();
+        this.emprestimos = new ArrayList<>();
+        this.emprestimos.add(primeiro);
     }
 
-    /**
-     * Retorna o item (primeira Reserva) armazenado neste nó.
-     * 
-     * @return A Reserva do nó.
-     */
-    public Reserva getItem() {
-        return item;
+    public String getNome() {
+        return nome;
     }
 
-    /**
-    * Retorna a lista de reservas associadas à chave.
-     * 
-     * @return Lista de Reservas.
-     */
-    public List<Reserva> getReservas() {
-        return Reservas;
+    public ArrayList<Emprestimo> getEmprestimos() {
+        return emprestimos;
     }
 
-    /**
-     * Retorna o filho esquerdo deste nó.
-     * 
-     * @return O nó filho esquerdo.
-     */
+    public void adicionar(Emprestimo e) {
+        emprestimos.add(e);
+    }
+
     public NoABB getEsq() {
         return esq;
     }
 
-    /**
-     * Define o filho esquerdo deste nó.
-     * 
-     * @param esq O nó filho esquerdo a ser definido.
-     */
     public void setEsq(NoABB esq) {
         this.esq = esq;
     }
 
-    /**
-     * Retorna o filho direito deste nó.
-     * 
-     * @return O nó filho direito.
-     */
     public NoABB getDir() {
         return dir;
     }
 
-    /**
-     * Define o filho direito deste nó.
-     * 
-     * @param dir O nó filho direito a ser definido.
-     */
     public void setDir(NoABB dir) {
         this.dir = dir;
-    }
-
-    /**
-     * Adiciona uma nova Reserva à lista de Reservas. Se a Reserva já existir,
-     * não será adicionada novamente (evitando duplicatas).
-     * 
-     * @param Reserva A Reserva a ser adicionada.
-     */
-    public void adicionarReserva(Reserva Reserva) {
-        // Verifica se a Reserva já não existe na lista para evitar duplicatas
-        if (!this.Reservas.contains(Reserva)) {
-            this.Reservas.add(Reserva);
-        }
     }
 }
