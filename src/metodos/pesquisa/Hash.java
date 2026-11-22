@@ -1,4 +1,4 @@
-package ordenacao;
+package metodos.pesquisa;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

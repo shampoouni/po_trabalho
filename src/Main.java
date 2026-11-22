@@ -9,12 +9,12 @@ import java.util.List;
 
 import emprestimo.Emprestimo;
 import emprestimo.LerArquivo;
-import ordenacao.ArvoreABB;
-import ordenacao.ArvoreAVL;
-import ordenacao.Hash;
-import ordenacao.Heapsort;
-import ordenacao.Quicksort;
-import ordenacao.QuicksortInsercao;
+import metodos.ordenacao.Heapsort;
+import metodos.ordenacao.Quicksort;
+import metodos.ordenacao.QuicksortInsercao;
+import metodos.pesquisa.ArvoreABB;
+import metodos.pesquisa.ArvoreAVL;
+import metodos.pesquisa.Hash;
 
 /**
  * Executa em sequência (sem menu) os 6 processos do trabalho para os 12

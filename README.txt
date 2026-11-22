@@ -5,6 +5,6 @@ Pelo terminal:
   javac -encoding UTF-8 -d bin $(find src -name "*.java")
   java -cp bin Main
 
-  src/       código-fonte (Main + pacotes emprestimo e ordenacao)
+  src/       código-fonte (Main + pacotes emprestimo, metodos.ordenacao e metodos.pesquisa)
   data/      12 arquivos emprestimo*.txt + nomes.txt (400 nomes a pesquisar)
   saida/     72 arquivos gerados (Heap, Quick, QuickIns, ABB, AVL, Hash) + tempos.txt (tabela de tempos médios)
